@@ -1,0 +1,29 @@
+{
+  "name": "bank4all-smartcontract",
+  "version": "1.0.0",
+  "description": "bank4all smartcontract set",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/semiangel/bank4all-smartcontract.git"
+  },
+  "keywords": [
+    "bank4all",
+    "smartcontract",
+    "microfinance",
+    "rosca",
+    "peer-lending"
+  ],
+  "author": "PCep",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/semiangel/bank4all-smartcontract/issues"
+  },
+  "homepage": "https://github.com/semiangel/bank4all-smartcontract#readme",
+  "dependencies": {
+    "web3": "^1.9.0"
+  }
+}
