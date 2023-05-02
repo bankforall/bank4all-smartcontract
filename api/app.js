@@ -10,10 +10,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 
 // Load routes
-const indexRoute = require('./api/routes/index');
-const usersRoute = require('./api/routes/users');
-const authRoute = require('./api/routes/auth');
-const transactionsRoute = require('./api/routes/transactions');
+const indexRoute = require('./routes/index');
+const usersRoute = require('./routes/users');
+const authRoute = require('./routes/auth');
+const transactionsRoute = require('./routes/transactions');
 
 // Set up routes
 app.use('/', indexRoute);
