@@ -1,4 +1,6 @@
 # Ignore node_modules folder
 node_modules/
+config/
 
-env/config.js
+.env
+genJWT.js
