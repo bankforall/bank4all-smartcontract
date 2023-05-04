@@ -5,11 +5,14 @@ const http = require("http"); //Loadup http for server
 const PORT = 1234; //Assign listening port
 const jwt = require('jsonwebtoken'); //jsonwebtoken for authentication
 const bcrypt = require('bcryptjs'); //bcryptjs for authentication
+const crypto = require('crypto');
 
 //Loadup database
 //const db = require("../config/db"); // real db not ready yet
 const db = require("./config/mockdb"); //use mockdb just for demonstration
 const users = db['users'];
+const assets = db['assets'];
+const activeGroup = db['activeGroup'];
 const { jwtSecret } = require("./config/config");
 
 //Loadup smartcontract and blockchain interface
@@ -45,6 +48,8 @@ function authenticateJWT(req, res, next) {
     }
 }
 
+//----maybe have update info. from smartcontract
+
 //==================================================
 
 // Handling request
@@ -79,12 +84,40 @@ app.get('/protected', authenticateJWT, (req, res) => {
 });
 
 // Dashboard summary - status, active group list
-app.get('/protected', authenticateJWT, (req, res) => {
-    res.json({ message: `Hello, ${req.user.name}! This is a protected resource.` });
+app.get('/dashboard', authenticateJWT, (req, res) => {
+    const selectedUser = req.user.id;
+    var foundGroup = [];
+    for (const group of activeGroup) {
+        const hasPerson = group.groupMembers.some(member => member.id === selectedUser);
+        if (hasPerson) {
+            foundGroup.push(group.id);
+        }
+    }
+    var dashboardElement = {
+        assetsBalance: assets[selectedUser],
+        belongGroup: foundGroup 
+    };
+    res.json(dashboardElement);
 });
 
 // Create group
-
+app.post('/creategroup', authenticateJWT, (req, res) => {
+    const createGroupPolicy = req.body;
+    const hash = crypto.createHash('sha1').update(JSON.stringify(createGroupPolicy)).digest('hex');
+    const newGroupName = createGroupPolicy.groupName;
+    const newGroupPolicy = createGroupPolicy.groupPolicy;
+    const newGroupMembers = [{ id: req.user.id, name: req.user.name}];
+    const groupProperty = { 
+        id: hash,
+        groupName: newGroupName,
+        groupPolicy: newGroupPolicy,
+        groupMembers: newGroupMembers
+    };
+    console.log(groupProperty);
+    res.json({ 
+        message: `Hello, ${req.user.name}! This is a protected resource.`
+    });
+});
 
 // Join group
 
