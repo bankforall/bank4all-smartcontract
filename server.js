@@ -125,12 +125,38 @@ app.post('/creategroup', authenticateJWT, (req, res) => {
     fs.writeFileSync('config/mockdb.json', jsonContent);
     console.log('mockup database updated...');
     res.json({ 
-        message: `Hello, ${req.user.name}! This is a protected resource.`
+        message: `Create group process...`
     });
 });
 
-// Join group
+// Discover group
+app.get('/discover', authenticateJWT, (req, res) => {
+    const selectedUser = req.user.id;
+    res.json(activeGroup);
+});
 
+// Join group
+app.post('/joingroup', authenticateJWT, (req, res) => {
+    const selectedUserID = req.user.id;
+    const selectedUserName = req.user.name;
+    const aimToGroup = req.body.id;
+    const memberToAdd = {
+        id: selectedUserID,
+        name: selectedUserName
+    }
+    for (var selectedGroup = 0; selectedGroup<activeGroup.length; selectedGroup++) {
+        if (activeGroup[selectedGroup].id === aimToGroup) {
+            activeGroup[selectedGroup].groupMembers.push(memberToAdd);
+            console.log('Added new member to the selected group...');
+        }
+    }
+    const jsonContent = JSON.stringify(db);
+    fs.writeFileSync('config/mockdb.json', jsonContent);
+    console.log('mockup database updated...');
+    res.json({ 
+        message: `Join group process...`
+    });
+});
 
 // Group ongoing cycle
 
