@@ -111,7 +111,7 @@ app.post('/creategroup', authenticateJWT, (req, res) => {
     //sort new property and new group id into object
     const newGroupName = createGroupPolicy.groupName;
     const newGroupPolicy = createGroupPolicy.groupPolicy;
-    const newGroupMembers = [{ id: req.user.id, name: req.user.name}];
+    const newGroupMembers = [{ id: req.user.id, name: req.user.name, readyStatus: false}];
     const newGroupProperty = { 
         id: hash,
         groupName: newGroupName,
@@ -148,7 +148,8 @@ app.post('/joingroup', authenticateJWT, (req, res) => {
     const aimToGroup = req.body.id;
     const memberToAdd = {
         id: selectedUserID,
-        name: selectedUserName
+        name: selectedUserName, 
+        readyStatus: false
     }
     for (var selectedGroup = 0; selectedGroup<activeGroup.length; selectedGroup++) {
         if (activeGroup[selectedGroup].id === aimToGroup) {
@@ -164,8 +165,21 @@ app.post('/joingroup', authenticateJWT, (req, res) => {
     });
 });
 
-// Group ongoing cycle
+// Group ongoing cycle =============================
+// Group Ready: every members in the group must be readied for the group to start sharing cycle
+app.post('/ready', authenticateJWT, (req, res) => {
+    const fromUser = req.user.id;
+    const toGroup = req.body.groupId;
+});
 
+// Group Start: group host will able to start sharing cycle when every members ready
+// Smartcontract spawn from here
+
+// Group Activity trace
+
+// Group cycle trigger event
+
+// Group completed
 
 //All setup
 //Create Server ====================================
