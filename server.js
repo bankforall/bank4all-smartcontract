@@ -147,7 +147,7 @@ app.post('/creategroup', authenticateJWT, (req, res) => {
     //sort new property and new group id into object
     const newGroupName = createGroupPolicy.groupName;
     const newGroupPolicy = createGroupPolicy.groupPolicy;
-    const newGroupMembers = [{ id: req.user.id, name: req.user.name, readyStatus: false}];
+    const newGroupMembers = [{ id: req.user.id, name: req.user.name, readyStatus: false, isHost: true}];
     const newGroupProperty = { 
         id: hash,
         groupName: newGroupName,
@@ -185,7 +185,8 @@ app.post('/joingroup', authenticateJWT, (req, res) => {
     const memberToAdd = {
         id: selectedUserID,
         name: selectedUserName, 
-        readyStatus: false
+        readyStatus: false,
+        isHost: false
     }
     for (var selectedGroup = 0; selectedGroup<activeGroup.length; selectedGroup++) {
         if (activeGroup[selectedGroup].id === aimToGroup) {
@@ -235,8 +236,52 @@ app.post('/ready', authenticateJWT, (req, res) => {
 
 // Group Start: group host will able to start sharing cycle when every members ready
 // 1.Update Group Started Status
-// 2.Spawn sharing process
-// 3.Spawn smartcontract to record ongoing sharing process and control assets circulation
+app.post('/start', authenticateJWT, (req, res) => {
+    const fromUser = req.user.id;
+    const toGroup = req.body.groupId;
+    var updatedDB = db;
+    var responded = false;
+    for (var i=0; i<activeGroup.length; i++) {
+        if (activeGroup[i].id === toGroup) {
+            const checkingGroup = activeGroup[i];
+            const maxGroupMember = checkingGroup.groupMembers.length;
+            if (checkingGroup.groupReadyStatus == true) {
+                for (var j=0; j<maxGroupMember; j++) {
+                    const checkingMember = checkingGroup.groupMembers[j];
+                    if (checkingMember.id == fromUser) {
+                        if (checkingMember.isHost == true) {
+                            updatedDB.activeGroup[i].groupStartedStatus = true;
+                            res.json({ 
+                                message: `Start group process...`
+                            });
+                            responded = true;
+                            mockupDBUpdate(updatedDB);
+                            // 2.Spawn sharing process
+                            // 3.Spawn smartcontract to record ongoing sharing process and control assets circulation
+                        }
+                        else {
+                            res.json({ 
+                                message: `User is not the group host...`
+                            });
+                            responded = true;
+                        }
+                    }
+                }
+            }
+            else {
+                res.json({ 
+                    message: `Group not ready yet...`
+                });
+                responded = true;
+            }
+        }
+    }
+    if (!responded) {
+        res.json({ 
+            message: `Not this group...`
+        });
+    }
+});
 
 // Group Activity trace
 
