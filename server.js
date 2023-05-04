@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken'); //jsonwebtoken for authentication
 const bcrypt = require('bcryptjs'); //bcryptjs for authentication
 const crypto = require('crypto');
 const fs = require('fs');
+const cron = require('node-cron');
 
 //Loadup database
 //const db = require("../config/db"); // real db not ready yet
@@ -62,7 +63,7 @@ function mockupDBUpdate (updatedDB) {
 }
 
 //check for status change on group in local database
-function groupStatusCheck(groupId) {
+function groupStatusCheck (groupId) {
     console.log('Check for ready status of group ' + groupId);
     for (var i=0; i<activeGroup.length; i++) {
         if (activeGroup[i].id === groupId) {
@@ -85,6 +86,25 @@ function groupStatusCheck(groupId) {
     }
     // Return a resolved Promise to signal that the function has completed
     return Promise.resolve();
+}
+
+//Start group activity
+function startGroupActivity (groupId) {
+    for (var i=0; i<activeGroup.length; i++) {
+        if (activeGroup[i].id === groupId) {
+            const checkingGroup = activeGroup[i];
+            const selectedGroupLOT = checkingGroup.groupPolicy.timeLength;
+            if (selectedGroupLOT == "Instant") {
+                console.log('Instant group for demo... initiated');
+                //bypass cron, just for project demo only
+
+            }
+            else {
+                console.log('Group time length is' + selectedGroupLOT + ' ... initiated');
+                //use cron to trigger event
+            }
+        }
+    }
 }
 
 //----maybe have update info. from smartcontract
@@ -258,6 +278,7 @@ app.post('/start', authenticateJWT, (req, res) => {
                             console.log('Start this group process...');
                             mockupDBUpdate(updatedDB);
                             // 2.Spawn sharing process
+                            startGroupActivity(toGroup);
                             // 3.Spawn smartcontract to record ongoing sharing process and control assets circulation
                         }
                         else {
