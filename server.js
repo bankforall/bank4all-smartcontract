@@ -56,6 +56,9 @@ function mockupDBUpdate (updatedDB) {
     const jsonContent = JSON.stringify(updatedDB);
     fs.writeFileSync('config/mockdb.json', jsonContent);
     console.log('mockup database updated...');
+
+    // Return a resolved Promise to signal that the function has completed
+    return Promise.resolve();
 }
 
 //check for status change on group in local database
@@ -80,6 +83,8 @@ function groupStatusCheck(groupId) {
             }
         }
     }
+    // Return a resolved Promise to signal that the function has completed
+    return Promise.resolve();
 }
 
 //----maybe have update info. from smartcontract
@@ -214,7 +219,14 @@ app.post('/ready', authenticateJWT, (req, res) => {
                 if (checkingMember.id == fromUser) {
                     updatedDB.activeGroup[i].groupMembers[j].readyStatus = true;
                     console.log('Update ready status for user...');
-                    mockupDBUpdate(updatedDB).groupStatusCheck(toGroup);
+                    mockupDBUpdate(updatedDB)
+                    .then(() => groupStatusCheck(toGroup))
+                    .then(() => {
+                        console.log('Done!');
+                    })
+                    .catch((error) => {
+                        console.error(error);
+                    });
                 }
             }
         }
