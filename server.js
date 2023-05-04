@@ -6,10 +6,13 @@ const PORT = 1234; //Assign listening port
 const jwt = require('jsonwebtoken'); //jsonwebtoken for authentication
 const bcrypt = require('bcryptjs'); //bcryptjs for authentication
 const crypto = require('crypto');
+const fs = require('fs');
 
 //Loadup database
 //const db = require("../config/db"); // real db not ready yet
-const db = require("./config/mockdb"); //use mockdb just for demonstration
+const rawData = fs.readFileSync('config/mockdb.json');
+//const db = require("./config/mockdb"); //use mockdb just for demonstration
+const db = JSON.parse(rawData); //use mockdb just for demonstration
 const users = db['users'];
 const assets = db['assets'];
 const activeGroup = db['activeGroup'];
@@ -102,18 +105,25 @@ app.get('/dashboard', authenticateJWT, (req, res) => {
 
 // Create group
 app.post('/creategroup', authenticateJWT, (req, res) => {
-    const createGroupPolicy = req.body;
+    const createGroupPolicy = req.body; //get object from frontend for new group properties
+    //hash group property to create group id - This probably will cause bug sometimes
     const hash = crypto.createHash('sha1').update(JSON.stringify(createGroupPolicy)).digest('hex');
+    //sort new property and new group id into object
     const newGroupName = createGroupPolicy.groupName;
     const newGroupPolicy = createGroupPolicy.groupPolicy;
     const newGroupMembers = [{ id: req.user.id, name: req.user.name}];
-    const groupProperty = { 
+    const newGroupProperty = { 
         id: hash,
         groupName: newGroupName,
         groupPolicy: newGroupPolicy,
         groupMembers: newGroupMembers
     };
-    console.log(groupProperty);
+    //create new object to store updated version of mockdb.json
+    var updateMockDB = db;
+    updateMockDB.activeGroup.push(newGroupProperty) //add the property of new group
+    const jsonContent = JSON.stringify(updateMockDB);
+    fs.writeFileSync('config/mockdb.json', jsonContent);
+    console.log('mockup database updated...');
     res.json({ 
         message: `Hello, ${req.user.name}! This is a protected resource.`
     });
