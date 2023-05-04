@@ -234,7 +234,9 @@ app.post('/ready', authenticateJWT, (req, res) => {
 });
 
 // Group Start: group host will able to start sharing cycle when every members ready
-// Smartcontract spawn from here
+// 1.Update Group Started Status
+// 2.Spawn sharing process
+// 3.Spawn smartcontract to record ongoing sharing process and control assets circulation
 
 // Group Activity trace
 
