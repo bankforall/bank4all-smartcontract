@@ -132,7 +132,13 @@ app.post('/creategroup', authenticateJWT, (req, res) => {
 // Discover group
 app.get('/discover', authenticateJWT, (req, res) => {
     const selectedUser = req.user.id;
-    res.json(activeGroup);
+    var showActiveGroup = activeGroup;
+    for (var i=0; i<activeGroup.length; i++) {
+        showActiveGroup[i]['memberCount'] = activeGroup[i].groupMembers.length;
+    }
+    if (selectedUser) {
+        res.json(showActiveGroup);
+    }
 });
 
 // Join group
