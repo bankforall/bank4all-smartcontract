@@ -34,11 +34,11 @@ function authenticateJWT(req, res, next) {
     if (authHeader) {
         const token = authHeader.split(' ')[1];
         try {
-        const decoded = jwt.verify(token, jwtSecret);
-        req.user = users.find((user) => user.id === decoded.id);
-        next();
+            const decoded = jwt.verify(token, jwtSecret);
+            req.user = users.find((user) => user.id === decoded.id);
+            next();
         } catch (error) {
-        res.status(401).json({ message: 'Invalid token' });
+            res.status(401).json({ message: 'Invalid token' });
         }
     } else {
         res.status(401).json({ message: 'Missing token' });
@@ -63,14 +63,19 @@ app.post('/login', async (req, res) => {
     if (user) {
         const isPasswordMatch = await bcrypt.compare(password, user.passwordHash);
         if (isPasswordMatch) {
-        const token = jwt.sign({ id: user.id }, jwtSecret);
-        res.json({ token });
+            const token = jwt.sign({ id: user.id }, jwtSecret);
+            res.json({ token });
         } else {
-        res.status(401).json({ message: 'Invalid password' });
+            res.status(401).json({ message: 'Invalid password' });
         }
     } else {
         res.status(401).json({ message: 'Invalid email' });
     }
+});
+
+// Check user authorization
+app.get('/protected', authenticateJWT, (req, res) => {
+    res.json({ message: `Hello, ${req.user.name}! This is a protected resource.` });
 });
 
 // Dashboard summary - status, active group list
