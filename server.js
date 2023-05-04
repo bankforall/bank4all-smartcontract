@@ -28,7 +28,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 
 //Function section =================================
-
+//authenticateJWT verify if the request is from the correct user
 function authenticateJWT(req, res, next) {
     const authHeader = req.headers.authorization;
     if (authHeader) {
@@ -72,6 +72,20 @@ app.post('/login', async (req, res) => {
         res.status(401).json({ message: 'Invalid email' });
     }
 });
+
+// Dashboard summary - status, active group list
+app.get('/protected', authenticateJWT, (req, res) => {
+    res.json({ message: `Hello, ${req.user.name}! This is a protected resource.` });
+});
+
+// Create group
+
+
+// Join group
+
+
+// Group ongoing cycle
+
 
 //All setup
 //Create Server ====================================
