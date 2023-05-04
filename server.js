@@ -52,8 +52,8 @@ function authenticateJWT(req, res, next) {
 }
 
 //update change to mockup database
-function mockupDBUpdate () {
-    const jsonContent = JSON.stringify(db);
+function mockupDBUpdate (updatedDB) {
+    const jsonContent = JSON.stringify(updatedDB);
     fs.writeFileSync('config/mockdb.json', jsonContent);
     console.log('mockup database updated...');
 }
@@ -74,13 +74,12 @@ function groupStatusCheck(groupId) {
             }
             if (readyCount == maxGroupMember) {
                 console.log('All members of this group are ready, this group is ready...');
-                activeGroup[i].groupReadyStatus = true;
+                var updatedDB = db;
+                updatedDB.activeGroup[i].groupReadyStatus = true;
+                mockupDBUpdate(updatedDB);
             }
         }
     }
-    const jsonContent = JSON.stringify(db);
-    fs.writeFileSync('config/mockdb.json', jsonContent);
-    console.log('mockup database updated...');
 }
 
 //----maybe have update info. from smartcontract
@@ -200,11 +199,26 @@ app.post('/joingroup', authenticateJWT, (req, res) => {
 // Group ongoing cycle =============================
 // Group Ready: every members in the group must be readied for the group to start sharing cycle
 app.post('/ready', authenticateJWT, (req, res) => {
+    res.json({ 
+        message: `Ready up to group process...`
+    });
     const fromUser = req.user.id;
     const toGroup = req.body.groupId;
-
-    console.log('Ready status from ' + fromUser + ' To Group ' + 'activeGroup');
-    groupStatusCheck(toGroup);
+    var updatedDB = db;
+    for (var i=0; i<activeGroup.length; i++) {
+        if (activeGroup[i].id === toGroup) {
+            const checkingGroup = activeGroup[i];
+            const maxGroupMember = checkingGroup.groupMembers.length;
+            for (var j=0; j<maxGroupMember; j++) {
+                const checkingMember = checkingGroup.groupMembers[j];
+                if (checkingMember.id == fromUser) {
+                    updatedDB.activeGroup[i].groupMembers[j].readyStatus = true;
+                    console.log('Update ready status for user...');
+                    mockupDBUpdate(updatedDB).groupStatusCheck(toGroup);
+                }
+            }
+        }
+    }
 });
 
 // Group Start: group host will able to start sharing cycle when every members ready
