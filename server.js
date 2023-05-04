@@ -51,6 +51,36 @@ function authenticateJWT(req, res, next) {
     }
 }
 
+//update change to mockup database
+function mockupDBUpdate () {
+    const jsonContent = JSON.stringify(db);
+    fs.writeFileSync('config/mockdb.json', jsonContent);
+    console.log('mockup database updated...');
+}
+
+//check for status change on group in local database
+function groupStatusCheck(groupId) {
+    for (var i=0; i<activeGroup.length; i++) {
+        if (activeGroup[i].id === groupId) {
+            var readyCount = 0;
+            const checkingGroup = activeGroup[i];
+            const maxGroupMember = checkingGroup.groupMembers.length;
+            for (var j=0; j<maxGroupMember; j++) {
+                const checkingMember = checkingGroup.groupMembers[j];
+                if (checkingMember.readyStatus == true) {
+                    readyCount++;
+                }
+            }
+            if (readyCount == maxGroupMember) {
+                activeGroup[i].groupReadyStatus = true;
+            }
+        }
+    }
+    const jsonContent = JSON.stringify(db);
+    fs.writeFileSync('config/mockdb.json', jsonContent);
+    console.log('mockup database updated...');
+}
+
 //----maybe have update info. from smartcontract
 
 //==================================================
@@ -170,6 +200,9 @@ app.post('/joingroup', authenticateJWT, (req, res) => {
 app.post('/ready', authenticateJWT, (req, res) => {
     const fromUser = req.user.id;
     const toGroup = req.body.groupId;
+
+    console.log('Ready status from ' + fromUser + ' To Group ' + 'activeGroup');
+    groupStatusCheck(toGroup);
 });
 
 // Group Start: group host will able to start sharing cycle when every members ready
