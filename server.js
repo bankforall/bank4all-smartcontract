@@ -255,6 +255,7 @@ app.post('/start', authenticateJWT, (req, res) => {
                                 message: `Start group process...`
                             });
                             responded = true;
+                            console.log('Start this group process...');
                             mockupDBUpdate(updatedDB);
                             // 2.Spawn sharing process
                             // 3.Spawn smartcontract to record ongoing sharing process and control assets circulation
@@ -264,6 +265,7 @@ app.post('/start', authenticateJWT, (req, res) => {
                                 message: `User is not the group host...`
                             });
                             responded = true;
+                            console.log('Unauthorized group start attempt detected...');
                         }
                     }
                 }
@@ -273,6 +275,7 @@ app.post('/start', authenticateJWT, (req, res) => {
                     message: `Group not ready yet...`
                 });
                 responded = true;
+                console.log('Group start attempt without ready... denied');
             }
         }
     }
@@ -280,6 +283,7 @@ app.post('/start', authenticateJWT, (req, res) => {
         res.json({ 
             message: `Not this group...`
         });
+        console.log('Not this group for this user to start:' + selectedUser);
     }
 });
 
