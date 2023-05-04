@@ -60,6 +60,7 @@ function mockupDBUpdate () {
 
 //check for status change on group in local database
 function groupStatusCheck(groupId) {
+    console.log('Check for ready status of group ' + groupId);
     for (var i=0; i<activeGroup.length; i++) {
         if (activeGroup[i].id === groupId) {
             var readyCount = 0;
@@ -72,6 +73,7 @@ function groupStatusCheck(groupId) {
                 }
             }
             if (readyCount == maxGroupMember) {
+                console.log('All members of this group are ready, this group is ready...');
                 activeGroup[i].groupReadyStatus = true;
             }
         }
