@@ -3,11 +3,12 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
-const globalConponent = require('../app');
-const db = globalConponent.db;
-const app = globalConponent.app;
+const App = require('../app');
+const app = App.app;
+const db = require("../../config/mockdb");
 const { jwtSecret } = require("../../config/config");
-const users = db.users;
+const users = db['users'];
+console.log(app);
 
 function authenticateJWT(req, res, next) {
     const authHeader = req.headers.authorization;

@@ -1,3 +1,4 @@
+//This is not in use due to messed up code cause infinity response time
 //Loadup Express
 const express = require('express');
 const app = express();
@@ -25,18 +26,12 @@ app.use(cors());
 // Loadup routes
 const greetRoute = require('./routes/hello');
 const indexRoute = require('./routes/index');
-const signInRoute = require('./routes/signIn');
+//const signInRoute = require('./routes/signIn');
 //const authRoutes = require("./routes/auth");
 // Then Setup routes
 app.use('/', indexRoute);
 app.use('/greet', greetRoute);
-app.use('/protected', signInRoute);
-
-const globalComponent = {
-    app: app,
-    web3: web3,
-    db: db
-};
+//app.use('/protected', signInRoute);
 
 // Export the app instance
-module.exports = globalComponent;
+module.exports = app;
