@@ -97,7 +97,7 @@ function startGroupActivity (groupId) {
             if (selectedGroupLOT == "Instant") {
                 console.log('Instant group for demo... initiated');
                 //bypass cron, just for project demo only
-
+                shareRound(groupId);
             }
             else {
                 console.log('Group time length is' + selectedGroupLOT + ' ... initiated');
@@ -168,11 +168,13 @@ app.post('/creategroup', authenticateJWT, (req, res) => {
     const newGroupName = createGroupPolicy.groupName;
     const newGroupPolicy = createGroupPolicy.groupPolicy;
     const newGroupMembers = [{ id: req.user.id, name: req.user.name, readyStatus: false, isHost: true}];
+    const newGroupActivities = [];
     const newGroupProperty = { 
         id: hash,
         groupName: newGroupName,
         groupPolicy: newGroupPolicy,
-        groupMembers: newGroupMembers
+        groupMembers: newGroupMembers,
+        groupActivities: newGroupActivities
     };
     //create new object to store updated version of mockdb.json
     var updateMockDB = db;
