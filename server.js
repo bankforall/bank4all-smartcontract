@@ -193,12 +193,13 @@ function bidStatusCheck (groupId) {
 function transactPool (bidWinner, winnerBid, selectedGroup) {
     //Transfer money from staking pool to the biding winner
     console.log('Pool cash sent to user ' + bidWinner);
-    const peer = 1;
-    const onGroup = activeGroup[selectedGroup];
-    const groupPolicy = onGroup.groupPolicy;
-    const totalSumTransfer = lastRoundWinnerBid + (groupPolicy.poolSize/groupPolicy.maxMember);
-    lastRoundWinnerBid = winnerBid;
-    sendToLocalNode(users[peer].walletAddr, users[bidWinner].walletAddr, totalSumTransfer);
+    //This section got commented out due to unable to start Quorum node with Wifi at the venue
+    //const peer = 1;
+    //const onGroup = activeGroup[selectedGroup];
+    //const groupPolicy = onGroup.groupPolicy;
+    //const totalSumTransfer = lastRoundWinnerBid + (groupPolicy.poolSize/groupPolicy.maxMember);
+    //lastRoundWinnerBid = winnerBid;
+    //sendToLocalNode(users[peer].walletAddr, users[bidWinner].walletAddr, totalSumTransfer);
     groupCompletedCheck(selectedGroup);
 }
 
