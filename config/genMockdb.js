@@ -26,13 +26,13 @@ const mockdb = {
             groupReadyStatus: false,
             groupStartedStatus: false,
             groupPolicy: {
-                mainType: 'Auction',
+                mainType: 'Float',
                 timeLength: 'Instant',
                 poolSize: 10000,
                 underlyingAsset: 'Cash',
                 maxMember: 2,
                 startDate: '05052023',
-                startTime: '0 13 ',
+                startTime: '0 0 13 ',
                 collatMech: 'None',
                 currencyType: 'THB',
                 roomType: {
@@ -44,7 +44,8 @@ const mockdb = {
                 { id: 1, name: 'Friend', readyStatus: false, isHost: false},
                 { id: 2, name: 'Petch', readyStatus: false, isHost: true}
             ],
-            groupActivities: []
+            groupActivities: [],
+            groupHistory: []
         },
         {
             id: 'cccd3d75b0562e8c8fa8954657688999a97f04bd',
@@ -58,7 +59,7 @@ const mockdb = {
                 underlyingAsset: 'Cash',
                 maxMember: 2,
                 startDate: '05052023',
-                startTime: '0 13 ',
+                startTime: '0 0 13 ',
                 collatMech: 'None',
                 currencyType: 'THB',
                 roomType: {
@@ -68,7 +69,8 @@ const mockdb = {
             groupMembers: [
                 { id: 1, name: 'Friend', readyStatus: false, isHost: true}
             ],
-            groupActivities: []
+            groupActivities: [],
+            groupHistory: []
         }
     ]
 };

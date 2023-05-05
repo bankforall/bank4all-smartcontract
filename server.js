@@ -1,4 +1,6 @@
 //Back to basic, no route mess, everything are here!!!!
+//Will later divide this code to support project scale up
+//fs will only be used to overwrite mockup database, will replace mockup with actual database in real deployment
 const express = require('express'); //Loadup Express
 const app = express();
 const http = require("http"); //Loadup http for server
@@ -94,17 +96,113 @@ function startGroupActivity (groupId) {
         if (activeGroup[i].id === groupId) {
             const checkingGroup = activeGroup[i];
             const selectedGroupLOT = checkingGroup.groupPolicy.timeLength;
+            const selectedGroupTime = checkingGroup.groupPolicy.startTime;
             if (selectedGroupLOT == "Instant") {
                 console.log('Instant group for demo... initiated');
                 //bypass cron, just for project demo only
-                shareRound(groupId);
+                shareRound(groupId, "Instant");
             }
             else {
                 console.log('Group time length is' + selectedGroupLOT + ' ... initiated');
                 //use cron to trigger event
+                const cronLOT = '* * *';
+                if (selectedGroupLOT == 'Daily') {
+                    cronLOT = '* * *';
+                }
+                else if (selectedGroupLOT == 'Weekly') {
+                    cronLOT = '* * 1';
+                }
+                else if (selectedGroupLOT == 'Monthly') {
+                    cronLOT = '1 * *';
+                }
+                else if (selectedGroupLOT == 'Yearly') {
+                    cronLOT = '1 1 *';
+                }
+                const cronTime = selectedGroupTime + cronLOT;
+                cron.schedule(cronTime, () => {
+                    console.log('Start round... for group:' + groupId);
+                    shareRound (groupId, cronLOT);
+                });
             }
         }
     }
+}
+
+//Group sharing round activity
+function shareRound (groupId, groupLOT) {
+    var checkingGroup = null;
+    for (var i=0; i<activeGroup.length; i++) {
+        if (activeGroup[i].id === groupId) {
+            checkingGroup = activeGroup[i];
+        }
+    }
+    const thisGroupPolicy = checkingGroup.groupPolicy;
+    if (groupLOT == "Instant") {
+        //Instant mean just for demo presentation
+        if (thisGroupPolicy.mainType == "Float") {
+            //wait for bidding
+            console.log('Wait for biding...');
+            bidStatusCheck(groupId);
+        }
+    }
+    else {
+        console.log('Not implemented yet...');
+        //Not implemented yet
+    }
+}
+
+function bidStatusCheck (groupId) {
+    var checkingGroup = null;
+    var selectedGroup = null;
+    for (var i=0; i<activeGroup.length; i++) {
+        if (activeGroup[i].id === groupId) {
+            checkingGroup = activeGroup[i];
+            selectedGroup = i;
+        }
+    }
+    const totalMembers = checkingGroup.groupPolicy.maxMember;
+    var bidCount = 0;
+    var alreadyWonBid = [];
+    for (var i=0; i<checkingGroup.groupHistory.length; i++) {
+        bidCount++; //Each finished round will reduce bidable member by 1
+        alreadyWonBid.push(checkingGroup.groupHistory[i].bidWinner); 
+        //Gather user id that already win bid in past round
+    }
+    var winnerBid = -1;
+    var bidWinner = -1;
+    const groupActivities = checkingGroup.groupActivities;
+    for (let i=0; i<groupActivities.length; i++) {
+        const activity = groupActivities[i];
+        if (!alreadyWonBid.includes(activity.id)) {
+            bidCount++;
+            if (activity.proposedBid > winnerBid) {
+                winnerBid = activity.proposedBid;
+                bidWinner = activity.id;
+            }
+            if (bidCount == totalMembers) {
+                console.log('Biding winner is user: ' + bidWinner);
+                transactPool(bidWinner);
+                recordHistory(bidWinner, selectedGroup);
+            }
+        }
+    }
+}
+
+function transactPool (bidWinner) {
+    //Transfer money from staking pool to the biding winner
+    console.log('Pool cash sent to user ' + bidWinner);
+}
+
+function recordHistory (bidWinner, selectedGroup) {
+    //record round history into group
+    var updatedDB = db;
+    updatedDB.activeGroup[selectedGroup].groupActivities = [];
+    const historyRecord = {
+        bidWinner
+    }
+    updatedDB.activeGroup[selectedGroup].groupHistory.push(historyRecord);
+    console.log('Group history record...');
+    mockupDBUpdate(updatedDB);
 }
 
 //----maybe have update info. from smartcontract
@@ -169,12 +267,14 @@ app.post('/creategroup', authenticateJWT, (req, res) => {
     const newGroupPolicy = createGroupPolicy.groupPolicy;
     const newGroupMembers = [{ id: req.user.id, name: req.user.name, readyStatus: false, isHost: true}];
     const newGroupActivities = [];
+    const newGroupHistory = [];
     const newGroupProperty = { 
         id: hash,
         groupName: newGroupName,
         groupPolicy: newGroupPolicy,
         groupMembers: newGroupMembers,
-        groupActivities: newGroupActivities
+        groupActivities: newGroupActivities,
+        groupHistory: newGroupHistory
     };
     //create new object to store updated version of mockdb.json
     var updateMockDB = db;
@@ -310,7 +410,43 @@ app.post('/start', authenticateJWT, (req, res) => {
     }
 });
 
-// Group Activity trace
+// Group Activity
+// Bidding accept for Float mainType
+app.post('/bid', authenticateJWT, (req, res) => {
+    res.json({ 
+        message: `Bidding process...`
+    });
+    const fromUser = req.user.id;
+    const toGroup = req.body.groupId;
+    const proposedBid = req.body.bidPropose;
+    const bidProposal = {
+        id: fromUser,
+        proposedBid: proposedBid
+    }
+    var updatedDB = db;
+    for (var i=0; i<activeGroup.length; i++) {
+        if (activeGroup[i].id === toGroup) {
+            const checkingGroup = activeGroup[i];
+            const maxGroupMember = checkingGroup.groupMembers.length;
+            for (var j=0; j<maxGroupMember; j++) {
+                const checkingMember = checkingGroup.groupMembers[j];
+                if (checkingMember.id == fromUser) {
+                    updatedDB.activeGroup[i].groupActivities.push(bidProposal);
+                    console.log('Biding proposed from user... accepted');
+                    mockupDBUpdate(updatedDB)
+                    .then(() => bidStatusCheck(toGroup))
+                    .then(() => {
+                        console.log('Done!');
+                    })
+                    .catch((error) => {
+                        console.error(error);
+                    });
+                }
+            }
+        }
+    }
+});
+// HTTP request for support Fix mainType will later be implemented
 
 // Group cycle trigger event
 
