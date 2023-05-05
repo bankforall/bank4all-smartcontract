@@ -239,20 +239,19 @@ function sendToLocalNode (A, B, C) {
     client.connect(nodePORT, nodeHOST, function() {
         console.log('CONNECTED TO: ' + nodeHOST + ':' + nodePORT);
         var docChosen = sendingPackage.toString();
-            sMessage = docChosen;
+        sMessage = docChosen;
 
-            // Split message into smaller packets
-            sChunks = [];
-            var chunk = "";
-            for (var i = 0; i < sMessage.length; i++) {
-                chunk += sMessage[i];
-                if (chunk.length === chunkSize || i === sMessage.length - 1) {
-                    sChunks.push(chunk);
-                    chunk = "";
-                }
+        // Split message into smaller packets
+        sChunks = [];
+        var chunk = "";
+        for (var i = 0; i < sMessage.length; i++) {
+            chunk += sMessage[i];
+            if (chunk.length === chunkSize || i === sMessage.length - 1) {
+                sChunks.push(chunk);
+                chunk = "";
             }
-            prepareSendChunk(); //Prepare and enter packets sending loop
-        });
+        }
+        prepareSendChunk(); //Prepare and enter packets sending loop
     });
 
     client.on('data', function(data) {
