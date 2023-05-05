@@ -202,17 +202,20 @@ function transactPool (bidWinner, winnerBid, selectedGroup) {
     groupCompletedCheck(selectedGroup);
 }
 
-async function sendToLocalNode (A, B, C){
+function sendToLocalNode (A, B, C) {
     const sendingPackage = {
         A, B, C
     };
     var client = new net.Socket();
     const nodeHOST = '192.168.1.1';
     const nodePORT = 4444;
+    var sMessage = null;
+    var sChunks = [];
+    const chunkSize = 1024;
 
     //Send number of chunk to let the receiver know
     var prepareSendChunk = function() {
-        var chunkCount = xmlChunks.length + 1; //+1 also count the chunkCount value
+        var chunkCount = sChunks.length + 1; //+1 also count the chunkCount value
         console.log("***************************");
         console.log("Chunk pieces: " + chunkCount);
         console.log("***************************");
@@ -220,34 +223,31 @@ async function sendToLocalNode (A, B, C){
             console.log("sending chunkCount");
             client.write(chunkCount.toString()); //.write send only string
         }
-        hrstart = process.hrtime();
-        console.log('Sent: \n' + xmlMessage + '\n');     
+        console.log('Sent: \n' + sMessage + '\n');     
     }
 
     // Send packets one by one
     var j = 0;
     var sendNextChunk = function() {
-        if (j < xmlChunks.length) {
-            client.write(xmlChunks[j], function() {
+        if (j < sChunks.length) {
+            client.write(sChunks[j], function() {
                 j++;
             });
         }
     };
 
-    client.connect(PORT, HOST, function() {
-        console.log('CONNECTED TO: ' + HOST + ':' + PORT);
-        var docChosen = 'SingleDocumentEntry' + docNum + '.xml';
-        fs.readFile(docChosen, function(err, buf) {
-            if (err) console.log(err);
-            xmlMessage = buf.toString();
+    client.connect(nodePORT, nodeHOST, function() {
+        console.log('CONNECTED TO: ' + nodeHOST + ':' + nodePORT);
+        var docChosen = sendingPackage.toString();
+            sMessage = docChosen;
 
-            // Split XML message into smaller packets
-            xmlChunks = [];
+            // Split message into smaller packets
+            sChunks = [];
             var chunk = "";
-            for (var i = 0; i < xmlMessage.length; i++) {
-                chunk += xmlMessage[i];
-                if (chunk.length === chunkSize || i === xmlMessage.length - 1) {
-                    xmlChunks.push(chunk);
+            for (var i = 0; i < sMessage.length; i++) {
+                chunk += sMessage[i];
+                if (chunk.length === chunkSize || i === sMessage.length - 1) {
+                    sChunks.push(chunk);
                     chunk = "";
                 }
             }
@@ -262,11 +262,8 @@ async function sendToLocalNode (A, B, C){
         }
         else if (dataGot == "FIN") {
             client.end();
-            var hrend = process.hrtime(hrstart);
             console.log('==============================');
             console.log('Respond received: ' + data);
-            var totalMillisec = hrend[0]*1000 + (hrend[1] / 1000000);
-            console.info('Execution time (hr): %dms', totalMillisec);
             console.log('==============================');
         }
     });
