@@ -203,6 +203,7 @@ function transactPool (bidWinner, winnerBid, selectedGroup) {
 }
 
 function sendToLocalNode (A, B, C) {
+    //Send to local Quorum node to deploy  into smartcontract
     const sendingPackage = {
         A, B, C
     };
@@ -238,8 +239,7 @@ function sendToLocalNode (A, B, C) {
 
     client.connect(nodePORT, nodeHOST, function() {
         console.log('CONNECTED TO: ' + nodeHOST + ':' + nodePORT);
-        var docChosen = sendingPackage.toString();
-        sMessage = docChosen;
+        sMessage = sendingPackage.toString();
 
         // Split message into smaller packets
         sChunks = [];

@@ -1,15 +1,13 @@
 const hrstart = null;
 const net = require('net');
-const fs = require("fs");
 const util = require("util");
 const xml2js = require('xml2js');
 const parseString = xml2js.parseString;
-const builder = new xml2js.Builder;
 
 var Web3 = require('web3');
 var web3 = new Web3("../data/geth.ipc", net);
 
-const PORT = 5432; //Assign listening port
+const PORT = 4444; //Assign listening port
 
 async function fullContract (A, B, C){
     //web3.eth.defaultAccount = web3.eth.personal.getAccounts().then(console.log);
@@ -103,11 +101,12 @@ async function fullContract (A, B, C){
 
 //ProcessData interprete any xmlMessages came through Netsocket=====================================================
 function processData (dataIn) {
-    console.log('XML:\n' + dataIn);
+    console.log('message:\n' + dataIn);
     parseString(dataIn, function (err, result) {
       if (err) throw err;
       console.log('\nConverted to object: ');
       console.log('-----------------------\n' + util.inspect(result) + '\n---------------------');
+      fullContract(result.A, result.B, result.C)
     });
 }
 
