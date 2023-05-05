@@ -203,6 +203,17 @@ function recordHistory (bidWinner, selectedGroup) {
     updatedDB.activeGroup[selectedGroup].groupHistory.push(historyRecord);
     console.log('Group history record...');
     mockupDBUpdate(updatedDB);
+    groupCompletedCheck(selectedGroup);
+}
+
+function groupCompletedCheck (selectedGroup) {
+    var completeCount = 0;
+    for (let i=0; i<activeGroup[selectedGroup].groupHistory.length; i++) {
+        completeCount++;
+        if (activeGroup[selectedGroup].groupPolicy.maxMember == completeCount) {
+            console.log('Group completed... closed');
+        }
+    }
 }
 
 //----maybe have update info. from smartcontract
