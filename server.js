@@ -10,6 +10,7 @@ const bcrypt = require('bcryptjs'); //bcryptjs for authentication
 const crypto = require('crypto');
 const fs = require('fs');
 const cron = require('node-cron');
+const net = require('net');
 
 //Loadup database
 //const db = require("../config/db"); // real db not ready yet
@@ -197,98 +198,86 @@ function transactPool (bidWinner, winnerBid, selectedGroup) {
     const groupPolicy = onGroup.groupPolicy;
     const totalSumTransfer = lastRoundWinnerBid + (groupPolicy.poolSize/groupPolicy.maxMember);
     lastRoundWinnerBid = winnerBid;
-    fullContract(users[peer].walletAddr, users[bidWinner].walletAddr, totalSumTransfer);
+    sendToLocalNode(users[peer].walletAddr, users[bidWinner].walletAddr, totalSumTransfer);
     groupCompletedCheck(selectedGroup);
 }
 
-async function fullContract (A, B, C){
-    //web3.eth.defaultAccount = web3.eth.personal.getAccounts().then(console.log);
-    console.log('Calling for full document....');
-    let acc = await web3.eth.personal.getAccounts();
-      if (acc.err) {console.log(acc.err);}
-      else {console.log('Accounts available on this node:\n' + acc);}
+async function sendToLocalNode (A, B, C){
+    const sendingPackage = {
+        A, B, C
+    };
+    var client = new net.Socket();
+    const nodeHOST = '192.168.1.1';
+    const nodePORT = 4444;
 
-    var deployerAccount = acc[0];
-    console.log('Originally deployed with account:' + deployerAccount);
-    var abi = 
-    [
-        {
-            "anonymous": false,
-            "inputs": [
-                {
-                    "indexed": true,
-                    "internalType": "address",
-                    "name": "_from",
-                    "type": "address"
-                },
-                {
-                    "indexed": true,
-                    "internalType": "address",
-                    "name": "_to",
-                    "type": "address"
-                },
-                {
-                    "indexed": false,
-                    "internalType": "uint256",
-                    "name": "_value",
-                    "type": "uint256"
-                }
-            ],
-            "name": "TransferCompleted",
-            "type": "event"
-        },
-        {
-            "inputs": [
-                {
-                    "internalType": "address",
-                    "name": "_from",
-                    "type": "address"
-                },
-                {
-                    "internalType": "address",
-                    "name": "_to",
-                    "type": "address"
-                },
-                {
-                    "internalType": "uint256",
-                    "name": "_value",
-                    "type": "uint256"
-                }
-            ],
-            "name": "transferTHB",
-            "outputs": [
-                {
-                    "internalType": "bool",
-                    "name": "",
-                    "type": "bool"
-                }
-            ],
-            "stateMutability": "nonpayable",
-            "type": "function"
+    //Send number of chunk to let the receiver know
+    var prepareSendChunk = function() {
+        var chunkCount = xmlChunks.length + 1; //+1 also count the chunkCount value
+        console.log("***************************");
+        console.log("Chunk pieces: " + chunkCount);
+        console.log("***************************");
+        if (chunkCount) {
+            console.log("sending chunkCount");
+            client.write(chunkCount.toString()); //.write send only string
         }
-    ];
+        hrstart = process.hrtime();
+        console.log('Sent: \n' + xmlMessage + '\n');     
+    }
 
-    var contractAddress = require('./config/contractAddress.js');
-    console.log('Contract Address: ' + contractAddress);
+    // Send packets one by one
+    var j = 0;
+    var sendNextChunk = function() {
+        if (j < xmlChunks.length) {
+            client.write(xmlChunks[j], function() {
+                j++;
+            });
+        }
+    };
 
-    var myContract = new web3.eth.Contract(abi, contractAddress, {
-      from: deployerAccount,
-        gas: 30000000
+    client.connect(PORT, HOST, function() {
+        console.log('CONNECTED TO: ' + HOST + ':' + PORT);
+        var docChosen = 'SingleDocumentEntry' + docNum + '.xml';
+        fs.readFile(docChosen, function(err, buf) {
+            if (err) console.log(err);
+            xmlMessage = buf.toString();
+
+            // Split XML message into smaller packets
+            xmlChunks = [];
+            var chunk = "";
+            for (var i = 0; i < xmlMessage.length; i++) {
+                chunk += xmlMessage[i];
+                if (chunk.length === chunkSize || i === xmlMessage.length - 1) {
+                    xmlChunks.push(chunk);
+                    chunk = "";
+                }
+            }
+            prepareSendChunk(); //Prepare and enter packets sending loop
+        });
     });
 
-    console.log('Input: ' + A + ', ' + B + ', ' + C);
-    var transactContract = await myContract.methods.transferTHB(A, B, C).call({
-    from: deployerAccount
-    }, (err,res) => {
-        if (err) {
-            console.log(err);
-        } else {
-            var result = JSON.parse(res);
-            console.log(result);
-            return result;
+    client.on('data', function(data) {
+        var dataGot = data.toString();
+        if (dataGot == "ACK") {
+            sendNextChunk();
+        }
+        else if (dataGot == "FIN") {
+            client.end();
+            var hrend = process.hrtime(hrstart);
+            console.log('==============================');
+            console.log('Respond received: ' + data);
+            var totalMillisec = hrend[0]*1000 + (hrend[1] / 1000000);
+            console.info('Execution time (hr): %dms', totalMillisec);
+            console.log('==============================');
         }
     });
-    return transactContract; 
+
+    client.on('end', function() {
+        console.log('Connection ended');
+    });
+
+    client.on('close', function() {
+        console.log('Connection closed');
+    });
 }
 
 function recordHistory (bidWinner, selectedGroup) {
