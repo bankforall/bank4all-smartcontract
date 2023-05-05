@@ -151,6 +151,7 @@ function shareRound (groupId, groupLOT) {
     }
 }
 
+var lastRoundWinnerBid = 0;
 function bidStatusCheck (groupId) {
     var checkingGroup = null;
     var selectedGroup = null;
@@ -181,16 +182,113 @@ function bidStatusCheck (groupId) {
             }
             if (bidCount == totalMembers) {
                 console.log('Biding winner is user: ' + bidWinner);
-                transactPool(bidWinner);
+                transactPool(bidWinner, winnerBid, selectedGroup);
                 recordHistory(bidWinner, selectedGroup);
             }
         }
     }
 }
 
-function transactPool (bidWinner) {
+function transactPool (bidWinner, winnerBid, selectedGroup) {
     //Transfer money from staking pool to the biding winner
     console.log('Pool cash sent to user ' + bidWinner);
+    const peer = 1;
+    const onGroup = activeGroup[selectedGroup];
+    const groupPolicy = onGroup.groupPolicy;
+    const totalSumTransfer = lastRoundWinnerBid + (groupPolicy.poolSize/groupPolicy.maxMember);
+    lastRoundWinnerBid = winnerBid;
+    fullContract(users[peer].walletAddr, users[bidWinner].walletAddr, totalSumTransfer);
+    groupCompletedCheck(selectedGroup);
+}
+
+async function fullContract (A, B, C){
+    //web3.eth.defaultAccount = web3.eth.personal.getAccounts().then(console.log);
+    console.log('Calling for full document....');
+    let acc = await web3.eth.personal.getAccounts();
+      if (acc.err) {console.log(acc.err);}
+      else {console.log('Accounts available on this node:\n' + acc);}
+
+    var deployerAccount = acc[0];
+    console.log('Originally deployed with account:' + deployerAccount);
+    var abi = 
+    [
+        {
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": true,
+                    "internalType": "address",
+                    "name": "_from",
+                    "type": "address"
+                },
+                {
+                    "indexed": true,
+                    "internalType": "address",
+                    "name": "_to",
+                    "type": "address"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "uint256",
+                    "name": "_value",
+                    "type": "uint256"
+                }
+            ],
+            "name": "TransferCompleted",
+            "type": "event"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "_from",
+                    "type": "address"
+                },
+                {
+                    "internalType": "address",
+                    "name": "_to",
+                    "type": "address"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "_value",
+                    "type": "uint256"
+                }
+            ],
+            "name": "transferTHB",
+            "outputs": [
+                {
+                    "internalType": "bool",
+                    "name": "",
+                    "type": "bool"
+                }
+            ],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        }
+    ];
+
+    var contractAddress = require('./config/contractAddress.js');
+    console.log('Contract Address: ' + contractAddress);
+
+    var myContract = new web3.eth.Contract(abi, contractAddress, {
+      from: deployerAccount,
+        gas: 30000000
+    });
+
+    console.log('Input: ' + A + ', ' + B + ', ' + C);
+    var transactContract = await myContract.methods.transferTHB(A, B, C).call({
+    from: deployerAccount
+    }, (err,res) => {
+        if (err) {
+            console.log(err);
+        } else {
+            var result = JSON.parse(res);
+            console.log(result);
+            return result;
+        }
+    });
+    return transactContract; 
 }
 
 function recordHistory (bidWinner, selectedGroup) {
@@ -203,11 +301,11 @@ function recordHistory (bidWinner, selectedGroup) {
     updatedDB.activeGroup[selectedGroup].groupHistory.push(historyRecord);
     console.log('Group history record...');
     mockupDBUpdate(updatedDB);
-    groupCompletedCheck(selectedGroup);
 }
 
 function groupCompletedCheck (selectedGroup) {
     var completeCount = 0;
+    lastRoundWinnerBid = 0;
     for (let i=0; i<activeGroup[selectedGroup].groupHistory.length; i++) {
         completeCount++;
         if (activeGroup[selectedGroup].groupPolicy.maxMember == completeCount) {

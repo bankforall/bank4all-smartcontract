@@ -2,8 +2,20 @@
 const fs = require('fs');
 const mockdb = {
     users: [
-        { id: 1, name: 'Friend', email: 'friend@bank4all.com', passwordHash: '$2a$10$1eYLXOifd3C2v6qSl8d1hur8udayxEcLQ3kFMlDc3uozS6gud0eee' }, // Password: bank4all-friend
-        { id: 2, name: 'Petch', email: 'petch@bank4all.com', passwordHash: '$2a$10$CJsathcF0hPGh5xQhisK1.9TBm.vVKuNlXYJ/pYk95tFy2bWbDCrW' }, // Password: bank4all-petch
+        { 
+            id: 1, 
+            name: 'Friend', 
+            email: 'friend@bank4all.com', 
+            passwordHash: '$2a$10$1eYLXOifd3C2v6qSl8d1hur8udayxEcLQ3kFMlDc3uozS6gud0eee',
+            walletAddr: '18bacdf2c219efa051d9d43771c9c20883122abc'  
+        }, // Password: bank4all-friend
+        { 
+            id: 2, 
+            name: 'Petch', 
+            email: 'petch@bank4all.com', 
+            passwordHash: '$2a$10$CJsathcF0hPGh5xQhisK1.9TBm.vVKuNlXYJ/pYk95tFy2bWbDCrW',
+            walletAddr: '23292cbdb32dae0305f389a150410d4be7b8e59a'   
+        }, // Password: bank4all-petch
     ],
     assets: {
         '1': {
